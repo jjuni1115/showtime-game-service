@@ -28,6 +28,7 @@ ext {
 }
 
 dependencies {
+    implementation files('core-api-0.0.4-plain.jar')
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'

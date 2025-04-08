@@ -14,5 +14,6 @@ public class GameDto {
     private String address;
     private String stadium;
     private String gameDate;
+    private String content;
 
 }
