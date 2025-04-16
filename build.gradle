@@ -21,6 +21,7 @@ configurations {
 
 repositories {
     mavenCentral()
+    maven { url 'https://jitpack.io' }
 }
 
 ext {
@@ -28,7 +29,7 @@ ext {
 }
 
 dependencies {
-    implementation files('core-api-0.0.4-plain.jar')
+    implementation 'com.github.jjuni1115:showtime-core-api:0.0.7'
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'

@@ -7,6 +7,8 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Component
@@ -17,8 +19,11 @@ public class GameRepository {
     private final MongoTemplate mongoTemplate;
 
     public List<Game> findMainGameList(){
+
+
+
         Query query = new Query();
-        query.addCriteria(Criteria.where("deadlineYn").is(false));
+        query.addCriteria(Criteria.where("deadlineYn").is(false).and("gameDate").gt(LocalDateTime.now()));
 
         List<Game> gameList = mongoTemplate.find(query, Game.class);
 
