@@ -5,6 +5,7 @@ import com.showtime.gameservice.entity.Game;
 import com.showtime.gameservice.repository.GameRepository;
 import com.showtime.gameservice.util.DateUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +23,6 @@ public class GameService {
 
     public void saveNewGame(GameDto req){
 
-        //TODO: insert 로직 추가하기
 
         Game game = Game.builder()
                 .game_name(req.getGameName())
@@ -40,7 +40,7 @@ public class GameService {
     }
 
     @Transactional
-    public List<Game> getGameMainList(){
+    public Page<Game> getGameMainList(){
         return gameRepository.findMainGameList();
     }
 
