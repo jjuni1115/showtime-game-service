@@ -2,6 +2,7 @@ package com.showtime.gameservice.endpoint;
 
 import com.showtime.coreapi.response.ApiResponse;
 import com.showtime.gameservice.dto.GameDto;
+import com.showtime.gameservice.dto.GameSearchDto;
 import com.showtime.gameservice.entity.Game;
 import com.showtime.gameservice.service.GameService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -9,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,8 +39,8 @@ public class GameEndpoint {
     }
 
     @GetMapping("")
-    public ResponseEntity<ApiResponse<Page<Game>>> getGameMainList(){
-        Page<Game> gameList = gameService.getGameMainList();
+    public ResponseEntity<ApiResponse<Page<Game>>> getGameMainList(@ParameterObject GameSearchDto params) {
+        Page<Game> gameList = gameService.getGameMainList(params);
 
         return ResponseEntity.ok(ApiResponse.ok(gameList, request.getRequestURI()));
     }

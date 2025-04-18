@@ -1,11 +1,13 @@
 package com.showtime.gameservice.service;
 
 import com.showtime.gameservice.dto.GameDto;
+import com.showtime.gameservice.dto.GameSearchDto;
 import com.showtime.gameservice.entity.Game;
 import com.showtime.gameservice.repository.GameRepository;
 import com.showtime.gameservice.util.DateUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,8 +42,8 @@ public class GameService {
     }
 
     @Transactional
-    public Page<Game> getGameMainList(){
-        return gameRepository.findMainGameList();
+    public Page<Game> getGameMainList(GameSearchDto params) {
+        return gameRepository.findMainGameList(params.getKeyword(), PageRequest.of(params.getCurrPage(), params.getPageSize()));
     }
 
 

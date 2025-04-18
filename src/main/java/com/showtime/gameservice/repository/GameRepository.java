@@ -21,20 +21,20 @@ public class GameRepository {
 
     private final MongoTemplate mongoTemplate;
 
-    public Page<Game> findMainGameList(){
+    public Page<Game> findMainGameList(String keyword, PageRequest pageRequest) {
 
 
 
         Query query = new Query();
         query.addCriteria(Criteria.where("deadlineYn").is(false).and("gameDate").gt(LocalDateTime.now()));
-        query.with(PageRequest.of(0,5));
+        query.with(pageRequest);
 
         List<Game> gameList = mongoTemplate.find(query, Game.class);
 
         Page<Game> res = PageableExecutionUtils.getPage(
                 gameList,
-                PageRequest.of(0, 5),
-                () -> mongoTemplate.count(query, Game.class)
+                pageRequest,
+                () -> mongoTemplate.count(query.limit(-1).skip(-1), Game.class)
         );
 
         return res;
