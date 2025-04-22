@@ -45,5 +45,14 @@ public class GameEndpoint {
         return ResponseEntity.ok(ApiResponse.ok(gameList, request.getRequestURI()));
     }
 
+    @PutMapping("/entry/{gameId}")
+    public ResponseEntity<ApiResponse<String>> entryGame(@PathVariable(value = "gameId") String gameId){
+
+        gameService.entryGame(gameId);
+
+        return ResponseEntity.ok(ApiResponse.ok("게임 참가 성공", request.getRequestURI()));
+
+    }
+
 
 }
