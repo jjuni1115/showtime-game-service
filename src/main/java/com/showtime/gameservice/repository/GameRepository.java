@@ -27,6 +27,13 @@ public class GameRepository {
 
         Query query = new Query();
         query.addCriteria(Criteria.where("deadlineYn").is(false).and("gameDate").gt(LocalDateTime.now()));
+        if(keyword!=null && !keyword.isEmpty()){
+            query.addCriteria(new Criteria().orOperator(
+                    Criteria.where("gameName").regex(keyword, "i"),
+                    Criteria.where("address").regex(keyword, "i"),
+                    Criteria.where("stadium").regex(keyword, "i")
+            ));
+        }
         query.with(pageRequest);
 
         List<Game> gameList = mongoTemplate.find(query, Game.class);
@@ -38,6 +45,16 @@ public class GameRepository {
         );
 
         return res;
+    }
+
+    public Game findGame(String gameId){
+
+        return mongoTemplate.findById(gameId, Game.class);
+
+    }
+
+    public void entryPlayer(Game game){
+        mongoTemplate.save(game);
     }
 
 }

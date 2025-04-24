@@ -1,10 +1,13 @@
 package com.showtime.gameservice.service;
 
+import com.showtime.coreapi.exception.CustomRuntimeException;
+import com.showtime.coreapi.feign.ResponseDto;
 import com.showtime.gameservice.client.UserServiceClient;
 import com.showtime.gameservice.dto.GameDto;
 import com.showtime.gameservice.dto.GameSearchDto;
 import com.showtime.gameservice.entity.Game;
 import com.showtime.gameservice.repository.GameRepository;
+import com.showtime.gameservice.type.GameErrorCode;
 import com.showtime.gameservice.util.DateUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +21,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -36,7 +40,7 @@ public class GameService {
 
 
         Game game = Game.builder()
-                .game_name(req.getGameName())
+                .gameName(req.getGameName())
                 .content(req.getContent())
                 .gameType(req.getGameType())
                 .gameDate(DateUtil.convertStringToLocalDateTime(req.getGameDate(),"yyyyMMdd HH:mm"))
@@ -45,6 +49,7 @@ public class GameService {
                 .deadlineYn(false)
                 .maxPlayer(req.getMaxPlayer())
                 .minPlayer(req.getMinPlayer())
+                .players(new ArrayList<>())
                 .build();
 
         mongoTemplate.insert(game);
@@ -59,9 +64,28 @@ public class GameService {
     public void entryGame(String gameId){
 
 
-        String userEmail = userServiceClient.getUserId();
+        ResponseDto<String> userIdRes = userServiceClient.getUserId();
 
-        log.info("email : {}", userEmail);
+        Game game = gameRepository.findGame(gameId);
+        if(game==null){
+            throw new CustomRuntimeException(GameErrorCode.GAME_NOT_FOUND);
+        }
+
+        if(game.getPlayers()!=null && game.getPlayers().contains(userIdRes.getData())){
+            throw new CustomRuntimeException(GameErrorCode.USER_ALREADY_REGISTER_EXCEPTION);
+        }
+
+        if( game.getPlayers() != null && (game.getMaxPlayer() <= game.getPlayers().size())){
+            throw new CustomRuntimeException(GameErrorCode.CAPACITY_EXCEED_EXCEPTION);
+        }
+
+        if(game.getPlayers()==null){
+            game.setPlayers(List.of(userIdRes.getData()));
+        }
+
+        game.getPlayers().add(userIdRes.getData());
+        gameRepository.entryPlayer(game);
+
 
 
 

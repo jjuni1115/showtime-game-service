@@ -1,6 +1,7 @@
 package com.showtime.gameservice.client;
 
-import com.showtime.gameservice.config.FeignConfig;
+import com.showtime.coreapi.feign.FeignConfig;
+import com.showtime.coreapi.feign.ResponseDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 
@@ -8,6 +9,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 public interface UserServiceClient {
 
     @GetMapping("/user/user-id")
-    String getUserId();
+    ResponseDto<String> getUserId();
 
 }

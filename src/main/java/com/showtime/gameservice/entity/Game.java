@@ -5,6 +5,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Document(collection = "game_list")
 @Getter
@@ -17,7 +18,7 @@ public class Game {
     @Id
     private String id;
 
-    private String game_name;
+    private String gameName;
     private int maxPlayer;
     private int minPlayer;
     private String address;
@@ -26,6 +27,8 @@ public class Game {
     private String content;
     private String stadium;
     private String gameType;
+
+    private List<String> players;
 
 
 }
