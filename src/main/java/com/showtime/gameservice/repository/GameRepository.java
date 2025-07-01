@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -47,14 +48,16 @@ public class GameRepository {
         return res;
     }
 
-    public Game findGame(String gameId){
+    public Optional<Game> findGame(String gameId){
 
-        return mongoTemplate.findById(gameId, Game.class);
+        return Optional.of(mongoTemplate.findById(gameId, Game.class));
 
     }
 
     public void entryPlayer(Game game){
         mongoTemplate.save(game);
     }
+
+    public Game closeGame(Game game){ return mongoTemplate.save(game); }
 
 }

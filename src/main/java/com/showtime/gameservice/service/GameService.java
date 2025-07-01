@@ -66,10 +66,7 @@ public class GameService {
 
         ResponseDto<String> userIdRes = userServiceClient.getUserId();
 
-        Game game = gameRepository.findGame(gameId);
-        if(game==null){
-            throw new CustomRuntimeException(GameErrorCode.GAME_NOT_FOUND);
-        }
+        Game game = gameRepository.findGame(gameId).orElseThrow(() -> new CustomRuntimeException(GameErrorCode.GAME_NOT_FOUND));
 
         if(game.getPlayers()!=null && game.getPlayers().contains(userIdRes.getData())){
             throw new CustomRuntimeException(GameErrorCode.USER_ALREADY_REGISTER_EXCEPTION);
@@ -85,6 +82,39 @@ public class GameService {
 
         game.getPlayers().add(userIdRes.getData());
         gameRepository.entryPlayer(game);
+
+
+
+
+    }
+
+    @Transactional
+    public Game closeGame(String gameId){
+
+        Game game = gameRepository.findGame(gameId).orElseThrow(() -> new CustomRuntimeException(GameErrorCode.GAME_NOT_FOUND));
+
+        if(game.getDeadlineYn()){
+
+            throw new CustomRuntimeException(GameErrorCode.GAME_ALREADY_CLOSE);
+
+        }
+
+        ResponseDto<String> userIdRes = userServiceClient.getUserId();
+
+        if(!game.getCreateUserId().equals(userIdRes.getData())){
+
+            throw new CustomRuntimeException(GameErrorCode.CLOSE_NOT_ALLOWED);
+
+        }
+
+        game.setDeadlineYn(true);
+
+        Game gameEntity = gameRepository.closeGame(game);
+
+        return gameEntity;
+
+
+
 
 
 

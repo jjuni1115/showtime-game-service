@@ -27,6 +27,7 @@ public class Game {
     private String content;
     private String stadium;
     private String gameType;
+    private String createUserId;
 
     private List<String> players;
 

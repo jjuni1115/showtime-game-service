@@ -54,5 +54,15 @@ public class GameEndpoint {
 
     }
 
+    @DeleteMapping("/close-game/{gameId}")
+    public ResponseEntity<ApiResponse<Game>> closeGame(
+            @PathVariable(value = "gameId") String gameId){
+
+        Game game = gameService.closeGame(gameId);
+
+        return ResponseEntity.ok(ApiResponse.ok(game,request.getRequestURI()));
+
+    }
+
 
 }
