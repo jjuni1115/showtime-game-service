@@ -28,8 +28,10 @@ public class Game {
     private String stadium;
     private String gameType;
     private String createUserId;
+    private Boolean closeYn;
 
     private List<String> players;
+    private List<String> waitingPlayers;
 
 
 }

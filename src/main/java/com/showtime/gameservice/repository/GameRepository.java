@@ -27,7 +27,7 @@ public class GameRepository {
 
 
         Query query = new Query();
-        query.addCriteria(Criteria.where("deadlineYn").is(false).and("gameDate").gt(LocalDateTime.now()));
+        query.addCriteria(Criteria.where("closeYn").is(false).and("gameDate").gt(LocalDateTime.now()));
         if(keyword!=null && !keyword.isEmpty()){
             query.addCriteria(new Criteria().orOperator(
                     Criteria.where("gameName").regex(keyword, "i"),
@@ -59,5 +59,7 @@ public class GameRepository {
     }
 
     public Game closeGame(Game game){ return mongoTemplate.save(game); }
+
+    public Game playerConfirm(Game game) { return mongoTemplate.save(game); }
 
 }

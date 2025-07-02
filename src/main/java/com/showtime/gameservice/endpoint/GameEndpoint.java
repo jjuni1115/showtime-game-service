@@ -38,6 +38,7 @@ public class GameEndpoint {
         return ResponseEntity.ok(ApiResponse.ok("게임 생성 성공", request.getRequestURI()));
     }
 
+    @Operation(summary = "게임 리스트 조회", description = "게임 리스트 조회 API")
     @GetMapping("")
     public ResponseEntity<ApiResponse<Page<Game>>> getGameMainList(@ParameterObject GameSearchDto params) {
         Page<Game> gameList = gameService.getGameMainList(params);
@@ -45,6 +46,7 @@ public class GameEndpoint {
         return ResponseEntity.ok(ApiResponse.ok(gameList, request.getRequestURI()));
     }
 
+    @Operation(summary = "게임 참가 요청")
     @PutMapping("/entry/{gameId}")
     public ResponseEntity<ApiResponse<String>> entryGame(@PathVariable(value = "gameId") String gameId){
 
@@ -54,6 +56,20 @@ public class GameEndpoint {
 
     }
 
+    @Operation(summary = "게임 참가 확정")
+    @PutMapping("/entry/confirm/{gameId}/userId")
+    public ResponseEntity<ApiResponse<Game>> entryConfirm(
+            @PathVariable(value = "gameId") String gameId, @PathVariable(value = "userId") String userId){
+
+
+        Game game = gameService.entryConfirm(gameId,userId);
+
+        return ResponseEntity.ok(ApiResponse.ok(game,request.getRequestURI()));
+
+
+    }
+
+    @Operation(summary = "게임 모집 종료")
     @DeleteMapping("/close-game/{gameId}")
     public ResponseEntity<ApiResponse<Game>> closeGame(
             @PathVariable(value = "gameId") String gameId){

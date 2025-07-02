@@ -15,6 +15,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -44,7 +47,7 @@ class GameServiceTest {
         //given
         Game game = Game.builder()
                 .createUserId("jjuni1115")
-                .deadlineYn(false)
+                .closeYn(false)
                 .build();
 
         ResponseDto<String> userResponse = new ResponseDto<>();
@@ -62,7 +65,7 @@ class GameServiceTest {
 
         //then
 
-        assertTrue(game.getDeadlineYn());
+        assertTrue(game.getCloseYn());
 
 
     }
@@ -87,7 +90,7 @@ class GameServiceTest {
         //given
         Game game = Game.builder()
                 .createUserId("createUserId")
-                .deadlineYn(false)
+                .closeYn(false)
                 .build();
         ResponseDto<String> userResponse = new ResponseDto<>();
         userResponse.setData("otherUserId");
@@ -107,7 +110,7 @@ class GameServiceTest {
     void alreadyCloseTest(){
         //given
         Game game = Game.builder()
-                .deadlineYn(true)
+                .closeYn(true)
                 .build();
 
         given(gameRepository.findGame(any())).willReturn(Optional.of(game));
@@ -115,6 +118,82 @@ class GameServiceTest {
         //when, then
         CustomRuntimeException exception = assertThrows(CustomRuntimeException.class,()->gameService.closeGame("testGameId"));
         assertEquals(GameErrorCode.GAME_ALREADY_CLOSE.getMessage(),exception.getErrorCode().getMessage());
+
+
+    }
+
+    @Test
+    @DisplayName("게임 참가 승인 테스트")
+    void playerConfirmTest(){
+
+
+        //given
+        List<String> waitingPlayer = new ArrayList<>(Arrays.asList("testId1","testId2"));
+        List<String> playerList = new ArrayList<>();
+        Game game = Game.builder()
+                .closeYn(false)
+                .createUserId("createUser")
+                .waitingPlayers(waitingPlayer)
+                .players(playerList)
+                .build();
+
+        ResponseDto<String> userResponse = new ResponseDto<>();
+        userResponse.setData("createUser");
+
+
+        given(gameRepository.findGame(any())).willReturn(Optional.of(game));
+        given(gameRepository.playerConfirm(any())).willReturn(game);
+        given(userServiceClient.getUserId()).willReturn(userResponse);
+
+
+        //when
+        Game gameResult = gameService.entryConfirm("","testId1");
+
+
+        //then
+        assertEquals(List.of("testId2"),gameResult.getWaitingPlayers());
+        assertEquals(List.of("testId1"),gameResult.getPlayers());
+
+
+
+    }
+
+    @Test
+    @DisplayName("게임 참가 승인 오류 상황 테스트")
+    void playerConfirmException(){
+
+        //given
+        Game closeGame = Game.builder()
+                .closeYn(true)
+                .createUserId("createUserId")
+                .build();
+
+        Game nonCreateUserGame = Game.builder()
+                .createUserId("createUserId")
+                .closeYn(false)
+                .build();
+
+        ResponseDto<String> userResponse = new ResponseDto<>();
+        userResponse.setData("anotherUserId");
+
+        given(gameRepository.findGame("notfoundgame")).willReturn(Optional.empty());
+        given(gameRepository.findGame("alreadyclosegame")).willReturn(Optional.of(closeGame));
+        given(gameRepository.findGame("notcreateuser")).willReturn(Optional.of(nonCreateUserGame));
+        given(userServiceClient.getUserId()).willReturn(userResponse);
+
+        //when, then
+
+        CustomRuntimeException notFoundException = assertThrows(CustomRuntimeException.class,()->gameService.entryConfirm("notfoundgame","playerId"));
+        CustomRuntimeException alreadyCloseException = assertThrows(CustomRuntimeException.class,()->gameService.entryConfirm("alreadyclosegame","playerId"));
+        CustomRuntimeException notCreateUserException = assertThrows(CustomRuntimeException.class,()->gameService.entryConfirm("notcreateuser","playerId"));
+
+        assertEquals(GameErrorCode.GAME_NOT_FOUND.getMessage(),notFoundException.getErrorCode().getMessage());
+        assertEquals(GameErrorCode.GAME_ALREADY_CLOSE.getMessage(),alreadyCloseException.getErrorCode().getMessage());
+        assertEquals(GameErrorCode.CONFIRM_NOT_ALLOWED.getMessage(),notCreateUserException.getErrorCode().getMessage());
+
+
+
+
 
 
     }

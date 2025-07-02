@@ -22,6 +22,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -36,17 +37,18 @@ public class GameService {
     private final UserServiceClient userServiceClient;
 
     @Transactional
-    public void saveNewGame(GameDto req){
+    public void saveNewGame(GameDto req) {
 
 
         Game game = Game.builder()
                 .gameName(req.getGameName())
                 .content(req.getContent())
                 .gameType(req.getGameType())
-                .gameDate(DateUtil.convertStringToLocalDateTime(req.getGameDate(),"yyyyMMdd HH:mm"))
+                .gameDate(DateUtil.convertStringToLocalDateTime(req.getGameDate(), "yyyyMMdd HH:mm"))
                 .address(req.getAddress())
                 .stadium(req.getStadium())
                 .deadlineYn(false)
+                .closeYn(false)
                 .maxPlayer(req.getMaxPlayer())
                 .minPlayer(req.getMinPlayer())
                 .players(new ArrayList<>())
@@ -61,39 +63,37 @@ public class GameService {
     }
 
     @Transactional
-    public void entryGame(String gameId){
+    public void entryGame(String gameId) {
 
 
         ResponseDto<String> userIdRes = userServiceClient.getUserId();
 
         Game game = gameRepository.findGame(gameId).orElseThrow(() -> new CustomRuntimeException(GameErrorCode.GAME_NOT_FOUND));
 
-        if(game.getPlayers()!=null && game.getPlayers().contains(userIdRes.getData())){
+        if (game.getPlayers() != null && (game.getPlayers().contains(userIdRes.getData()) || game.getWaitingPlayers().contains(userIdRes.getData()))) {
             throw new CustomRuntimeException(GameErrorCode.USER_ALREADY_REGISTER_EXCEPTION);
         }
 
-        if( game.getPlayers() != null && (game.getMaxPlayer() <= game.getPlayers().size())){
+        if (game.getPlayers() != null && (game.getMaxPlayer() <= game.getPlayers().size())) {
             throw new CustomRuntimeException(GameErrorCode.CAPACITY_EXCEED_EXCEPTION);
         }
 
-        if(game.getPlayers()==null){
-            game.setPlayers(List.of(userIdRes.getData()));
+        if (game.getPlayers() == null) {
+            game.setPlayers(new ArrayList<>(Arrays.asList(userIdRes.getData())));
         }
 
-        game.getPlayers().add(userIdRes.getData());
+        game.getWaitingPlayers().add(userIdRes.getData());
         gameRepository.entryPlayer(game);
-
-
 
 
     }
 
     @Transactional
-    public Game closeGame(String gameId){
+    public Game entryConfirm(String gameId, String userId) {
 
         Game game = gameRepository.findGame(gameId).orElseThrow(() -> new CustomRuntimeException(GameErrorCode.GAME_NOT_FOUND));
 
-        if(game.getDeadlineYn()){
+        if (game.getCloseYn()) {
 
             throw new CustomRuntimeException(GameErrorCode.GAME_ALREADY_CLOSE);
 
@@ -101,27 +101,52 @@ public class GameService {
 
         ResponseDto<String> userIdRes = userServiceClient.getUserId();
 
-        if(!game.getCreateUserId().equals(userIdRes.getData())){
+        if (!game.getCreateUserId().equals(userIdRes.getData())) {
+
+            throw new CustomRuntimeException(GameErrorCode.CONFIRM_NOT_ALLOWED);
+
+        }
+
+        if (game.getPlayers() != null || game.getPlayers().contains(userIdRes.getData()) ) {
+            throw new CustomRuntimeException(GameErrorCode.USER_ALREADY_REGISTER_EXCEPTION);
+        }
+
+        game.getPlayers().add(userId);
+        game.getWaitingPlayers().removeIf(player->player.equals(userId));
+
+        Game gameEntity = gameRepository.playerConfirm(game);
+
+        return gameEntity;
+
+    }
+
+    @Transactional
+    public Game closeGame(String gameId) {
+
+        Game game = gameRepository.findGame(gameId).orElseThrow(() -> new CustomRuntimeException(GameErrorCode.GAME_NOT_FOUND));
+
+        if (game.getCloseYn()) {
+
+            throw new CustomRuntimeException(GameErrorCode.GAME_ALREADY_CLOSE);
+
+        }
+
+        ResponseDto<String> userIdRes = userServiceClient.getUserId();
+
+        if (!game.getCreateUserId().equals(userIdRes.getData())) {
 
             throw new CustomRuntimeException(GameErrorCode.CLOSE_NOT_ALLOWED);
 
         }
 
-        game.setDeadlineYn(true);
+        game.setCloseYn(true);
 
         Game gameEntity = gameRepository.closeGame(game);
 
         return gameEntity;
 
 
-
-
-
-
-
     }
-
-
 
 
 }
