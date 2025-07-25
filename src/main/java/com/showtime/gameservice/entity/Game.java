@@ -27,11 +27,11 @@ public class Game {
     private String content;
     private String stadium;
     private String gameType;
-    private String createUserId;
+    private UserInfo createUser;
     private Boolean closeYn;
 
-    private List<String> players;
-    private List<String> waitingPlayers;
+    private List<UserInfo> players;
+    private List<UserInfo> waitingPlayers;
 
 
 }

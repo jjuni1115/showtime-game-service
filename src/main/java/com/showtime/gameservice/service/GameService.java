@@ -6,6 +6,7 @@ import com.showtime.gameservice.client.UserServiceClient;
 import com.showtime.gameservice.dto.GameDto;
 import com.showtime.gameservice.dto.GameSearchDto;
 import com.showtime.gameservice.entity.Game;
+import com.showtime.gameservice.entity.UserInfo;
 import com.showtime.gameservice.repository.GameRepository;
 import com.showtime.gameservice.type.GameErrorCode;
 import com.showtime.gameservice.util.DateUtil;
@@ -39,6 +40,13 @@ public class GameService {
     @Transactional
     public void saveNewGame(GameDto req) {
 
+        UserInfo createUserInfo = new UserInfo().builder()
+                .userName(userServiceClient.getUserId().getData().getUserName())
+                .userId(userServiceClient.getUserId().getData().getUserId())
+                .nickName(userServiceClient.getUserId().getData().getNickName())
+
+                .build();
+
 
         Game game = Game.builder()
                 .gameName(req.getGameName())
@@ -52,6 +60,7 @@ public class GameService {
                 .maxPlayer(req.getMaxPlayer())
                 .minPlayer(req.getMinPlayer())
                 .players(new ArrayList<>())
+                .createUser(createUserInfo)
                 .build();
 
         mongoTemplate.insert(game);
@@ -66,11 +75,11 @@ public class GameService {
     public void entryGame(String gameId) {
 
 
-        ResponseDto<String> userIdRes = userServiceClient.getUserId();
+       UserInfo userInfo = userServiceClient.getUserId().getData();
 
         Game game = gameRepository.findGame(gameId).orElseThrow(() -> new CustomRuntimeException(GameErrorCode.GAME_NOT_FOUND));
 
-        if (game.getPlayers() != null && (game.getPlayers().contains(userIdRes.getData()) || game.getWaitingPlayers().contains(userIdRes.getData()))) {
+        if (game.getPlayers() != null && (game.getPlayers().contains(userInfo) || game.getWaitingPlayers().contains(userInfo))) {
             throw new CustomRuntimeException(GameErrorCode.USER_ALREADY_REGISTER_EXCEPTION);
         }
 
@@ -79,10 +88,10 @@ public class GameService {
         }
 
         if (game.getPlayers() == null) {
-            game.setPlayers(new ArrayList<>(Arrays.asList(userIdRes.getData())));
+            game.setPlayers(new ArrayList<>(Arrays.asList(userInfo)));
         }
 
-        game.getWaitingPlayers().add(userIdRes.getData());
+        game.getWaitingPlayers().add(userInfo);
         gameRepository.entryPlayer(game);
 
 
@@ -99,20 +108,25 @@ public class GameService {
 
         }
 
-        ResponseDto<String> userIdRes = userServiceClient.getUserId();
+        UserInfo userInfo = userServiceClient.getUserId().getData();
 
-        if (!game.getCreateUserId().equals(userIdRes.getData())) {
+        if (!game.getCreateUser().getUserId().equals(userInfo.getUserId())) {
 
             throw new CustomRuntimeException(GameErrorCode.CONFIRM_NOT_ALLOWED);
 
         }
 
-        if (game.getPlayers() != null || game.getPlayers().contains(userIdRes.getData()) ) {
+        if (!game.getPlayers().isEmpty() || game.getPlayers().contains(userInfo) ) {
             throw new CustomRuntimeException(GameErrorCode.USER_ALREADY_REGISTER_EXCEPTION);
         }
 
-        game.getPlayers().add(userId);
-        game.getWaitingPlayers().removeIf(player->player.equals(userId));
+
+        UserInfo targetUSer = new UserInfo().builder()
+                .userId(userId)
+                .build();
+
+        game.getPlayers().add(targetUSer);
+        game.getWaitingPlayers().removeIf(player->player.getUserId().equals(userId));
 
         Game gameEntity = gameRepository.playerConfirm(game);
 
@@ -131,9 +145,9 @@ public class GameService {
 
         }
 
-        ResponseDto<String> userIdRes = userServiceClient.getUserId();
+        UserInfo userInfo = userServiceClient.getUserId().getData();
 
-        if (!game.getCreateUserId().equals(userIdRes.getData())) {
+        if (!game.getCreateUser().getUserId().equals(userInfo.getUserId())) {
 
             throw new CustomRuntimeException(GameErrorCode.CLOSE_NOT_ALLOWED);
 
