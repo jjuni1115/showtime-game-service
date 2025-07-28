@@ -42,7 +42,7 @@ public class GameService {
 
         UserInfo createUserInfo = new UserInfo().builder()
                 .userName(userServiceClient.getUserId().getData().getUserName())
-                .userId(userServiceClient.getUserId().getData().getUserId())
+                .userEmail(userServiceClient.getUserId().getData().getUserEmail())
                 .nickName(userServiceClient.getUserId().getData().getNickName())
 
                 .build();
@@ -60,6 +60,7 @@ public class GameService {
                 .maxPlayer(req.getMaxPlayer())
                 .minPlayer(req.getMinPlayer())
                 .players(new ArrayList<>())
+                .waitingPlayers(new ArrayList<>())
                 .createUser(createUserInfo)
                 .build();
 
@@ -98,7 +99,7 @@ public class GameService {
     }
 
     @Transactional
-    public Game entryConfirm(String gameId, String userId) {
+    public Game entryConfirm(String gameId, String userEmail) {
 
         Game game = gameRepository.findGame(gameId).orElseThrow(() -> new CustomRuntimeException(GameErrorCode.GAME_NOT_FOUND));
 
@@ -110,7 +111,7 @@ public class GameService {
 
         UserInfo userInfo = userServiceClient.getUserId().getData();
 
-        if (!game.getCreateUser().getUserId().equals(userInfo.getUserId())) {
+        if (!game.getCreateUser().getUserEmail().equals(userInfo.getUserEmail())) {
 
             throw new CustomRuntimeException(GameErrorCode.CONFIRM_NOT_ALLOWED);
 
@@ -122,11 +123,11 @@ public class GameService {
 
 
         UserInfo targetUSer = new UserInfo().builder()
-                .userId(userId)
+                .userEmail(userEmail)
                 .build();
 
         game.getPlayers().add(targetUSer);
-        game.getWaitingPlayers().removeIf(player->player.getUserId().equals(userId));
+        game.getWaitingPlayers().removeIf(player->player.getUserEmail().equals(userEmail));
 
         Game gameEntity = gameRepository.playerConfirm(game);
 
@@ -147,7 +148,7 @@ public class GameService {
 
         UserInfo userInfo = userServiceClient.getUserId().getData();
 
-        if (!game.getCreateUser().getUserId().equals(userInfo.getUserId())) {
+        if (!game.getCreateUser().getUserEmail().equals(userInfo.getUserEmail())) {
 
             throw new CustomRuntimeException(GameErrorCode.CLOSE_NOT_ALLOWED);
 

@@ -47,7 +47,7 @@ class GameServiceTest {
         //열려있는 게임이 정상적으로 닫히는지 테스트, 이미 닫힌 게임이면 오류, 등록자가 아니면 오류
         //given
         UserInfo userInfo = new UserInfo().builder()
-                .userId("jjuni1115")
+                .userEmail("jjuni1115")
                 .build();
 
         Game game = Game.builder()
@@ -57,7 +57,7 @@ class GameServiceTest {
 
         ResponseDto<UserInfo> userResponse = new ResponseDto<>();
         userResponse.setData(new UserInfo());
-        userResponse.getData().setUserId("jjuni1115");
+        userResponse.getData().setUserEmail("jjuni1115");
 
         given(gameRepository.findGame(any())).willReturn(Optional.of(game));
         given(gameRepository.closeGame(game)).willReturn(game);
@@ -95,7 +95,7 @@ class GameServiceTest {
         //given
 
         UserInfo userInfo = new UserInfo().builder()
-                .userId("createUserId")
+                .userEmail("createUserId")
                 .build();
 
         Game game = Game.builder()
@@ -104,7 +104,7 @@ class GameServiceTest {
                 .build();
         ResponseDto<UserInfo> userResponse = new ResponseDto<>();
         userResponse.setData(new UserInfo());
-        userResponse.getData().setUserId("otherUserId");
+        userResponse.getData().setUserEmail("otherUserId");
 
         //when
         given(gameRepository.findGame(any())).willReturn(Optional.of(game));
@@ -140,13 +140,13 @@ class GameServiceTest {
 
         //given
         UserInfo userInfo = new UserInfo().builder()
-                .userId("createUser")
+                .userEmail("createUser")
                 .build();
 
 
         List<UserInfo> waitingPlayers = new ArrayList<>(Arrays.asList(
-                UserInfo.builder().userId("testId1").userName("Tester1").build(),
-                UserInfo.builder().userId("testId2").userName("Tester2").build()
+                UserInfo.builder().userEmail("testId1").userName("Tester1").build(),
+                UserInfo.builder().userEmail("testId2").userName("Tester2").build()
         ));
 
 
@@ -160,7 +160,7 @@ class GameServiceTest {
 
         ResponseDto<UserInfo> userResponse = new ResponseDto<>();
         userResponse.setData(new UserInfo());
-        userResponse.getData().setUserId("createUser");
+        userResponse.getData().setUserEmail("createUser");
 
 
         given(gameRepository.findGame(any())).willReturn(Optional.of(game));
@@ -174,12 +174,12 @@ class GameServiceTest {
 
         //then
         assertEquals(
-                List.of(UserInfo.builder().userId("testId2").userName("Tester2").build()),
+                List.of(UserInfo.builder().userEmail("testId2").userName("Tester2").build()),
                 gameResult.getWaitingPlayers()
         );
 
         assertEquals(
-                List.of(UserInfo.builder().userId("testId1").userName("Tester1").build()),
+                List.of(UserInfo.builder().userEmail("testId1").userName("Tester1").build()),
                 gameResult.getPlayers()
         );
 
@@ -193,7 +193,7 @@ class GameServiceTest {
         //given
 
         UserInfo userInfo = new UserInfo().builder()
-                .userId("createUserId")
+                .userEmail("createUserId")
                 .build();
 
         Game closeGame = Game.builder()
@@ -208,7 +208,7 @@ class GameServiceTest {
 
         ResponseDto<UserInfo> userResponse = new ResponseDto<>();
         userResponse.setData(new UserInfo());
-        userResponse.getData().setUserId("anotherUserId");
+        userResponse.getData().setUserEmail("anotherUserId");
 
         given(gameRepository.findGame("notfoundgame")).willReturn(Optional.empty());
         given(gameRepository.findGame("alreadyclosegame")).willReturn(Optional.of(closeGame));

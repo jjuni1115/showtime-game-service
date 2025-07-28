@@ -57,12 +57,12 @@ public class GameEndpoint {
     }
 
     @Operation(summary = "게임 참가 확정")
-    @PutMapping("/entry/confirm/{gameId}/userId")
+    @PutMapping("/entry/confirm/{gameId}/{userEmail}")
     public ResponseEntity<ApiResponse<Game>> entryConfirm(
-            @PathVariable(value = "gameId") String gameId, @PathVariable(value = "userId") String userId){
+            @PathVariable(value = "gameId") String gameId, @PathVariable(value = "userEmail") String userEmail){
 
 
-        Game game = gameService.entryConfirm(gameId,userId);
+        Game game = gameService.entryConfirm(gameId,userEmail);
 
         return ResponseEntity.ok(ApiResponse.ok(game,request.getRequestURI()));
 
