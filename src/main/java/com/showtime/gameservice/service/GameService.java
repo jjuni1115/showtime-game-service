@@ -40,12 +40,7 @@ public class GameService {
     @Transactional
     public void saveNewGame(GameDto req) {
 
-        UserInfo createUserInfo = new UserInfo().builder()
-                .userName(userServiceClient.getUserId().getData().getUserName())
-                .userEmail(userServiceClient.getUserId().getData().getUserEmail())
-                .nickName(userServiceClient.getUserId().getData().getNickName())
-
-                .build();
+        UserInfo createUserInfo = userServiceClient.getLoingUserInfo().getData();
 
 
         Game game = Game.builder()
@@ -73,10 +68,18 @@ public class GameService {
     }
 
     @Transactional
+    public Game getGameInfo(String gameId) {
+
+        Game game = gameRepository.findGame(gameId).orElseThrow(() -> new CustomRuntimeException(GameErrorCode.GAME_NOT_FOUND));
+
+        return game;
+    }
+
+    @Transactional
     public void entryGame(String gameId) {
 
 
-       UserInfo userInfo = userServiceClient.getUserId().getData();
+       UserInfo userInfo = userServiceClient.getLoingUserInfo().getData();
 
         Game game = gameRepository.findGame(gameId).orElseThrow(() -> new CustomRuntimeException(GameErrorCode.GAME_NOT_FOUND));
 
@@ -99,7 +102,7 @@ public class GameService {
     }
 
     @Transactional
-    public Game entryConfirm(String gameId, String userEmail) {
+    public Game entryConfirm(String gameId, Long userId) {
 
         Game game = gameRepository.findGame(gameId).orElseThrow(() -> new CustomRuntimeException(GameErrorCode.GAME_NOT_FOUND));
 
@@ -109,7 +112,7 @@ public class GameService {
 
         }
 
-        UserInfo userInfo = userServiceClient.getUserId().getData();
+        UserInfo userInfo = userServiceClient.getLoingUserInfo().getData();
 
         if (!game.getCreateUser().getUserEmail().equals(userInfo.getUserEmail())) {
 
@@ -122,14 +125,45 @@ public class GameService {
         }
 
 
-        UserInfo targetUSer = new UserInfo().builder()
-                .userEmail(userEmail)
-                .build();
+        UserInfo targetUSer = userServiceClient.getUserInfo(userId).getData();
 
         game.getPlayers().add(targetUSer);
-        game.getWaitingPlayers().removeIf(player->player.getUserEmail().equals(userEmail));
+        game.getWaitingPlayers().removeIf(player->player.getUserId().equals(userId));
 
         Game gameEntity = gameRepository.playerConfirm(game);
+
+        return gameEntity;
+
+    }
+
+    @Transactional
+    public Game deletePlayer(String gameId, Long userId) {
+
+        Game game = gameRepository.findGame(gameId).orElseThrow(() -> new CustomRuntimeException(GameErrorCode.GAME_NOT_FOUND));
+
+        if (game.getCloseYn()) {
+
+            throw new CustomRuntimeException(GameErrorCode.GAME_ALREADY_CLOSE);
+
+        }
+
+        UserInfo userInfo = userServiceClient.getLoingUserInfo().getData();
+
+        if (!game.getCreateUser().getUserEmail().equals(userInfo.getUserEmail())) {
+
+            throw new CustomRuntimeException(GameErrorCode.DELETE_NOT_ALLOWED);
+
+        }
+
+        UserInfo targetUser = userServiceClient.getUserInfo(userId).getData();
+
+        if (!game.getPlayers().contains(targetUser)) {
+            throw new CustomRuntimeException(GameErrorCode.PLAYERS_NOT_FOUND);
+        }
+
+        game.getPlayers().removeIf(player->player.getUserId().equals(userId));
+
+        Game gameEntity = gameRepository.deletePlayer(game);
 
         return gameEntity;
 
@@ -146,7 +180,7 @@ public class GameService {
 
         }
 
-        UserInfo userInfo = userServiceClient.getUserId().getData();
+        UserInfo userInfo = userServiceClient.getLoingUserInfo().getData();
 
         if (!game.getCreateUser().getUserEmail().equals(userInfo.getUserEmail())) {
 

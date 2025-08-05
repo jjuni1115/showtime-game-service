@@ -62,4 +62,6 @@ public class GameRepository {
 
     public Game playerConfirm(Game game) { return mongoTemplate.save(game); }
 
+    public Game deletePlayer(Game game){return mongoTemplate.save(game);}
+
 }

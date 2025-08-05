@@ -46,6 +46,15 @@ public class GameEndpoint {
         return ResponseEntity.ok(ApiResponse.ok(gameList, request.getRequestURI()));
     }
 
+    @Operation(summary = "게임 상세 조회")
+    @GetMapping("/{gameId}")
+    public ResponseEntity<ApiResponse<Game>> getGameInfo(@PathVariable(value = "gameId") String gameId) {
+
+        Game game = gameService.getGameInfo(gameId);
+
+        return ResponseEntity.ok(ApiResponse.ok(game, request.getRequestURI()));
+    }
+
     @Operation(summary = "게임 참가 요청")
     @PutMapping("/entry/{gameId}")
     public ResponseEntity<ApiResponse<String>> entryGame(@PathVariable(value = "gameId") String gameId){
@@ -57,12 +66,12 @@ public class GameEndpoint {
     }
 
     @Operation(summary = "게임 참가 확정")
-    @PutMapping("/entry/confirm/{gameId}/{userEmail}")
+    @PutMapping("/entry/confirm/{gameId}/{userId}")
     public ResponseEntity<ApiResponse<Game>> entryConfirm(
-            @PathVariable(value = "gameId") String gameId, @PathVariable(value = "userEmail") String userEmail){
+            @PathVariable(value = "gameId") String gameId, @PathVariable(value = "userId") Long userId){
 
 
-        Game game = gameService.entryConfirm(gameId,userEmail);
+        Game game = gameService.entryConfirm(gameId,userId);
 
         return ResponseEntity.ok(ApiResponse.ok(game,request.getRequestURI()));
 
@@ -75,6 +84,18 @@ public class GameEndpoint {
             @PathVariable(value = "gameId") String gameId){
 
         Game game = gameService.closeGame(gameId);
+
+        return ResponseEntity.ok(ApiResponse.ok(game,request.getRequestURI()));
+
+    }
+
+    @Operation(summary = "참가자 삭제")
+    @DeleteMapping("/entry/{gameId}/{userId}")
+    public ResponseEntity<ApiResponse<Game>> deletePlayer(
+            @PathVariable(value = "gameId") String gameId, @PathVariable(value = "userId") Long userId){
+
+
+        Game game = gameService.deletePlayer(gameId, userId);
 
         return ResponseEntity.ok(ApiResponse.ok(game,request.getRequestURI()));
 

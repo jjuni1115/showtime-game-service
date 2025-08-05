@@ -20,7 +20,9 @@ public enum GameErrorCode implements ErrorCode {
     GAME_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "520003","존재하지 않는 게임입니다."),
     GAME_ALREADY_CLOSE(HttpStatus.INTERNAL_SERVER_ERROR,"520004","이미 모집 종료된 게임입니다."),
     CLOSE_NOT_ALLOWED(HttpStatus.INTERNAL_SERVER_ERROR,"520005","모집종료 권한이 없습니다."),
-    CONFIRM_NOT_ALLOWED(HttpStatus.INTERNAL_SERVER_ERROR,"520006","참가 확정 권한이 없습니다."),;
+    CONFIRM_NOT_ALLOWED(HttpStatus.INTERNAL_SERVER_ERROR,"520006","참가 확정 권한이 없습니다."),
+    DELETE_NOT_ALLOWED(HttpStatus.INTERNAL_SERVER_ERROR,"520007","참가자 삭제 권한이 없습니다."),
+    PLAYERS_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR,"520008","존재하지 않는 참가자 입니다.");
 
 
     private final HttpStatus status;

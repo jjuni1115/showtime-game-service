@@ -48,6 +48,7 @@ class GameServiceTest {
         //given
         UserInfo userInfo = new UserInfo().builder()
                 .userEmail("jjuni1115")
+                .userId(11L)
                 .build();
 
         Game game = Game.builder()
@@ -58,10 +59,11 @@ class GameServiceTest {
         ResponseDto<UserInfo> userResponse = new ResponseDto<>();
         userResponse.setData(new UserInfo());
         userResponse.getData().setUserEmail("jjuni1115");
+        userResponse.getData().setUserId(11L);
 
         given(gameRepository.findGame(any())).willReturn(Optional.of(game));
         given(gameRepository.closeGame(game)).willReturn(game);
-        given(userServiceClient.getUserId()).willReturn(userResponse);
+        given(userServiceClient.getLoingUserInfo()).willReturn(userResponse);
 
 
         //when
@@ -96,6 +98,7 @@ class GameServiceTest {
 
         UserInfo userInfo = new UserInfo().builder()
                 .userEmail("createUserId")
+                .userId(11L)
                 .build();
 
         Game game = Game.builder()
@@ -105,10 +108,11 @@ class GameServiceTest {
         ResponseDto<UserInfo> userResponse = new ResponseDto<>();
         userResponse.setData(new UserInfo());
         userResponse.getData().setUserEmail("otherUserId");
+        userResponse.getData().setUserId(12L);
 
         //when
         given(gameRepository.findGame(any())).willReturn(Optional.of(game));
-        given(userServiceClient.getUserId()).willReturn(userResponse);
+        given(userServiceClient.getLoingUserInfo()).willReturn(userResponse);
 
         //then
         CustomRuntimeException exception = assertThrows(CustomRuntimeException.class, () -> gameService.closeGame(""));
@@ -141,12 +145,14 @@ class GameServiceTest {
         //given
         UserInfo userInfo = new UserInfo().builder()
                 .userEmail("createUser")
+                .userId(11L)
                 .build();
 
 
+
         List<UserInfo> waitingPlayers = new ArrayList<>(Arrays.asList(
-                UserInfo.builder().userEmail("testId1").userName("Tester1").build(),
-                UserInfo.builder().userEmail("testId2").userName("Tester2").build()
+                UserInfo.builder().userId(12L).userName("Tester1").build(),
+                UserInfo.builder().userId(13L).userName("Tester2").build()
         ));
 
 
@@ -162,24 +168,31 @@ class GameServiceTest {
         userResponse.setData(new UserInfo());
         userResponse.getData().setUserEmail("createUser");
 
+        ResponseDto<UserInfo> targetUserResponse = new ResponseDto<>();
+        targetUserResponse.setData(new UserInfo());
+        targetUserResponse.getData().setUserName("Tester1");
+        targetUserResponse.getData().setUserId(12L);
+
+
 
         given(gameRepository.findGame(any())).willReturn(Optional.of(game));
         given(gameRepository.playerConfirm(any())).willReturn(game);
-        given(userServiceClient.getUserId()).willReturn(userResponse);
+        given(userServiceClient.getLoingUserInfo()).willReturn(userResponse);
+        given(userServiceClient.getUserInfo(12L)).willReturn(targetUserResponse);
 
 
         //when
-        Game gameResult = gameService.entryConfirm("", "testId1");
+        Game gameResult = gameService.entryConfirm("", 12L);
 
 
         //then
         assertEquals(
-                List.of(UserInfo.builder().userEmail("testId2").userName("Tester2").build()),
+                List.of(UserInfo.builder().userId(13L).userName("Tester2").build()),
                 gameResult.getWaitingPlayers()
         );
 
         assertEquals(
-                List.of(UserInfo.builder().userEmail("testId1").userName("Tester1").build()),
+                List.of(UserInfo.builder().userId(12L).userName("Tester1").build()),
                 gameResult.getPlayers()
         );
 
@@ -194,6 +207,7 @@ class GameServiceTest {
 
         UserInfo userInfo = new UserInfo().builder()
                 .userEmail("createUserId")
+                .userId(11L)
                 .build();
 
         Game closeGame = Game.builder()
@@ -213,13 +227,13 @@ class GameServiceTest {
         given(gameRepository.findGame("notfoundgame")).willReturn(Optional.empty());
         given(gameRepository.findGame("alreadyclosegame")).willReturn(Optional.of(closeGame));
         given(gameRepository.findGame("notcreateuser")).willReturn(Optional.of(nonCreateUserGame));
-        given(userServiceClient.getUserId()).willReturn(userResponse);
+        given(userServiceClient.getLoingUserInfo()).willReturn(userResponse);
 
         //when, then
 
-        CustomRuntimeException notFoundException = assertThrows(CustomRuntimeException.class, () -> gameService.entryConfirm("notfoundgame", "playerId"));
-        CustomRuntimeException alreadyCloseException = assertThrows(CustomRuntimeException.class, () -> gameService.entryConfirm("alreadyclosegame", "playerId"));
-        CustomRuntimeException notCreateUserException = assertThrows(CustomRuntimeException.class, () -> gameService.entryConfirm("notcreateuser", "playerId"));
+        CustomRuntimeException notFoundException = assertThrows(CustomRuntimeException.class, () -> gameService.entryConfirm("notfoundgame", 12L));
+        CustomRuntimeException alreadyCloseException = assertThrows(CustomRuntimeException.class, () -> gameService.entryConfirm("alreadyclosegame", 12L));
+        CustomRuntimeException notCreateUserException = assertThrows(CustomRuntimeException.class, () -> gameService.entryConfirm("notcreateuser", 12L));
 
         assertEquals(GameErrorCode.GAME_NOT_FOUND.getMessage(), notFoundException.getErrorCode().getMessage());
         assertEquals(GameErrorCode.GAME_ALREADY_CLOSE.getMessage(), alreadyCloseException.getErrorCode().getMessage());
@@ -227,6 +241,53 @@ class GameServiceTest {
 
 
     }
+
+    @Test
+    @DisplayName("게임 참가자 삭제 테스트")
+    void deletePlayerTest() {
+
+        //given
+        UserInfo userInfo = new UserInfo().builder()
+                .userEmail("createUser")
+                .userId(11L)
+                .build();
+
+        List<UserInfo> players = new ArrayList<>(Arrays.asList(
+                UserInfo.builder().userId(12L).userName("Tester1").build(),
+                UserInfo.builder().userId(13L).userName("Tester2").build()
+        ));
+
+        Game game = Game.builder()
+                .closeYn(false)
+                .createUser(userInfo)
+                .players(players)
+                .build();
+
+        ResponseDto<UserInfo> userResponse = new ResponseDto<>();
+        userResponse.setData(new UserInfo());
+        userResponse.getData().setUserEmail("createUser");
+
+        ResponseDto<UserInfo> targetUserResponse = new ResponseDto<>();
+        targetUserResponse.setData(new UserInfo());
+        targetUserResponse.getData().setUserName("Tester1");
+        targetUserResponse.getData().setUserId(12L);
+
+        given(gameRepository.findGame(any())).willReturn(Optional.of(game));
+        given(gameRepository.deletePlayer(any())).willReturn(game);
+        given(userServiceClient.getLoingUserInfo()).willReturn(userResponse);
+        given(userServiceClient.getUserInfo(12L)).willReturn(targetUserResponse);
+
+        //when
+        Game gameResult = gameService.deletePlayer("", 12L);
+
+        //then
+        assertEquals(
+                List.of(UserInfo.builder().userId(13L).userName("Tester2").build()),
+                gameResult.getPlayers()
+        );
+
+    }
+
 
     @BeforeEach
     void setGameService() {

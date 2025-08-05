@@ -12,6 +12,7 @@ import lombok.*;
 public class UserInfo {
 
 
+    private Long userId;
     private String userEmail;
     private String userName;
     private String nickName;
