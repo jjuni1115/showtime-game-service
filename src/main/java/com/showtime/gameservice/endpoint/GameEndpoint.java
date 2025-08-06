@@ -2,6 +2,7 @@ package com.showtime.gameservice.endpoint;
 
 import com.showtime.coreapi.response.ApiResponse;
 import com.showtime.gameservice.dto.GameDto;
+import com.showtime.gameservice.dto.MyGameDto;
 import com.showtime.gameservice.dto.GameSearchDto;
 import com.showtime.gameservice.entity.Game;
 import com.showtime.gameservice.service.GameService;
@@ -99,6 +100,15 @@ public class GameEndpoint {
 
         return ResponseEntity.ok(ApiResponse.ok(game,request.getRequestURI()));
 
+    }
+
+    @Operation(summary = "나의 참가 게임 조회")
+    @GetMapping("/my-game")
+    public ResponseEntity<ApiResponse<Page<MyGameDto>>> getMyGameList(@ParameterObject GameSearchDto params) {
+
+        Page<MyGameDto> myGameList = gameService.getMyGameList(params);
+
+        return ResponseEntity.ok(ApiResponse.ok(myGameList, request.getRequestURI()));
     }
 
 

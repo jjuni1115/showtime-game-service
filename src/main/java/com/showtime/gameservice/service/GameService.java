@@ -4,6 +4,7 @@ import com.showtime.coreapi.exception.CustomRuntimeException;
 import com.showtime.coreapi.feign.ResponseDto;
 import com.showtime.gameservice.client.UserServiceClient;
 import com.showtime.gameservice.dto.GameDto;
+import com.showtime.gameservice.dto.MyGameDto;
 import com.showtime.gameservice.dto.GameSearchDto;
 import com.showtime.gameservice.entity.Game;
 import com.showtime.gameservice.entity.UserInfo;
@@ -14,7 +15,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import java.util.stream.Collectors;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -195,6 +198,42 @@ public class GameService {
         return gameEntity;
 
 
+    }
+    @Transactional
+    public Page<MyGameDto> getMyGameList(GameSearchDto params) {
+
+        UserInfo userInfo = userServiceClient.getLoingUserInfo().getData();
+
+        Page<Game> myGameList = gameRepository.findMyGameList(userInfo.getUserId(), params.getKeyword(), PageRequest.of(params.getCurrPage(), params.getPageSize()));
+
+        return myGameList.map(game -> {
+            String userStatus;
+            if (game.getCreateUser().getUserId().equals(userInfo.getUserId())) {
+                userStatus = "created";
+            } else if (game.getPlayers().stream().anyMatch(player -> player.getUserId().equals(userInfo.getUserId()))) {
+                userStatus = "participating";
+            } else {
+                userStatus = "waiting";
+            }
+
+            return MyGameDto.builder()
+                    .id(game.getId())
+                    .gameName(game.getGameName())
+                    .maxPlayer(game.getMaxPlayer())
+                    .minPlayer(game.getMinPlayer())
+                    .address(game.getAddress())
+                    .gameDate(game.getGameDate())
+                    .deadlineYn(game.getDeadlineYn())
+                    .content(game.getContent())
+                    .stadium(game.getStadium())
+                    .gameType(game.getGameType())
+                    .createUser(game.getCreateUser())
+                    .closeYn(game.getCloseYn())
+                    .players(game.getPlayers())
+                    .waitingPlayers(game.getWaitingPlayers())
+                    .userStatus(userStatus)
+                    .build();
+        });
     }
 
 
