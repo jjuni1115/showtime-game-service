@@ -71,23 +71,28 @@ public class GameRepository {
 
     public Page<Game> findMyGameList(Long userId, String keyword, PageRequest pageRequest) {
 
-        // 1. Match Stage: Find games relevant to the user
-        Criteria userCriteria = new Criteria().orOperator(
+        // 1. Match Stage: Build a list of criteria
+        java.util.List<Criteria> criteriaList = new java.util.ArrayList<>();
+
+        // User-specific criteria (mandatory)
+        criteriaList.add(new Criteria().orOperator(
                 Criteria.where("createUser.userId").is(userId),
                 Criteria.where("players.userId").is(userId),
                 Criteria.where("waitingPlayers.userId").is(userId)
-        );
+        ));
 
-        Criteria keywordCriteria = new Criteria();
+        // Keyword criteria (optional)
         if (keyword != null && !keyword.isEmpty()) {
-            keywordCriteria.orOperator(
+            criteriaList.add(new Criteria().orOperator(
                     Criteria.where("gameName").regex(keyword, "i"),
                     Criteria.where("address").regex(keyword, "i"),
                     Criteria.where("stadium").regex(keyword, "i")
-            );
+            ));
         }
 
-        MatchOperation matchOperation = Aggregation.match(new Criteria().andOperator(userCriteria, keywordCriteria));
+        // Combine all criteria with AND
+        Criteria finalCriteria = new Criteria().andOperator(criteriaList.toArray(new Criteria[0]));
+        MatchOperation matchOperation = Aggregation.match(finalCriteria);
 
         // 2. AddFields Stage: Create fields for sorting
         AddFieldsOperation addFieldsOperation = Aggregation.addFields()
@@ -100,7 +105,8 @@ public class GameRepository {
                 .addFieldWithValue("statusOrder",
                         new Document("$cond", new Document("if", new Document("$eq", Arrays.asList("$createUser.userId", userId)))
                                 .append("then", 1)
-                                .append("else", new Document("$cond", new Document("if", new Document("$in", Arrays.asList(userId, "$players.userId")))
+                                .append("else", new Document("$cond", new Document("if",
+                                        new Document("$in", Arrays.asList(userId, new Document("$ifNull", Arrays.asList("$players.userId", Arrays.asList())))))
                                         .append("then", 2)
                                         .append("else", 3)
                                 ))
@@ -124,10 +130,11 @@ public class GameRepository {
         List<Game> gameList = mongoTemplate.aggregate(aggregation, "game_list", Game.class).getMappedResults();
 
         // Create aggregation pipeline for counting total documents
-        Aggregation countAggregation = Aggregation.newAggregation(matchOperation, addFieldsOperation, Aggregation.count().as("total"));
+        Aggregation countAggregation = Aggregation.newAggregation(matchOperation, Aggregation.count().as("total"));
+        List<Document> countResult = mongoTemplate.aggregate(countAggregation, "game_list", Document.class).getMappedResults();
         long total;
-        if (!mongoTemplate.aggregate(countAggregation, "game_list", Document.class).getMappedResults().isEmpty()) {
-            total = mongoTemplate.aggregate(countAggregation, "game_list", Document.class).getMappedResults().get(0).getInteger("total");
+        if (!countResult.isEmpty()) {
+            total = countResult.get(0).getInteger("total");
         } else {
             total = 0;
         }
