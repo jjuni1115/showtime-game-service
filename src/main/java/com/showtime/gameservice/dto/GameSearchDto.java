@@ -36,4 +36,22 @@ public class GameSearchDto {
     )
     private String keyword;
 
+    @Parameter(
+            name = "gameType"
+            ,description = "경기타입"
+            ,example = "1"
+            ,in = ParameterIn.QUERY
+            ,required = false
+    )
+    private String gameType;
+
+    @Parameter(
+            name = "myGameState"
+            ,description = "나의게임키워드"
+            ,example = "1"
+            ,in = ParameterIn.QUERY
+            ,required = false
+    )
+    private String myGameState;
+
 }

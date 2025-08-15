@@ -5,6 +5,7 @@ import com.showtime.coreapi.feign.ResponseDto;
 import com.showtime.gameservice.client.UserServiceClient;
 import com.showtime.gameservice.entity.Game;
 import com.showtime.gameservice.entity.UserInfo;
+import com.showtime.gameservice.kafka.GameEvnetProducer;
 import com.showtime.gameservice.repository.GameRepository;
 import com.showtime.gameservice.type.GameErrorCode;
 import org.junit.jupiter.api.BeforeEach;
@@ -289,9 +290,12 @@ class GameServiceTest {
     }
 
 
+    @Mock
+    GameEvnetProducer gameEvnetProducer;
+
     @BeforeEach
     void setGameService() {
-        gameService = new GameService(mongoTemplate, gameRepository, userServiceClient);
+        gameService = new GameService(mongoTemplate, gameRepository, userServiceClient, gameEvnetProducer);
     }
 
 

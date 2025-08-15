@@ -8,6 +8,7 @@ import com.showtime.gameservice.dto.MyGameDto;
 import com.showtime.gameservice.dto.GameSearchDto;
 import com.showtime.gameservice.entity.Game;
 import com.showtime.gameservice.entity.UserInfo;
+import com.showtime.gameservice.kafka.GameEvnetProducer;
 import com.showtime.gameservice.repository.GameRepository;
 import com.showtime.gameservice.type.GameErrorCode;
 import com.showtime.gameservice.util.DateUtil;
@@ -39,6 +40,8 @@ public class GameService {
     private final GameRepository gameRepository;
 
     private final UserServiceClient userServiceClient;
+
+    private final GameEvnetProducer gameEvnetProducer;
 
     @Transactional
     public void saveNewGame(GameDto req) {
@@ -135,6 +138,10 @@ public class GameService {
 
         Game gameEntity = gameRepository.playerConfirm(game);
 
+        gameEvnetProducer.sendGameEvent();
+
+
+
         return gameEntity;
 
     }
@@ -206,34 +213,56 @@ public class GameService {
 
         Page<Game> myGameList = gameRepository.findMyGameList(userInfo.getUserId(), params.getKeyword(), PageRequest.of(params.getCurrPage(), params.getPageSize()));
 
-        return myGameList.map(game -> {
-            String userStatus;
-            if (game.getCreateUser().getUserId().equals(userInfo.getUserId())) {
-                userStatus = "created";
-            } else if (game.getPlayers().stream().anyMatch(player -> player.getUserId().equals(userInfo.getUserId()))) {
-                userStatus = "participating";
-            } else {
-                userStatus = "waiting";
-            }
+        List<MyGameDto> filteredGames = myGameList.getContent().stream()
+                .map(game -> {
+                    String userStatus;
+                    if (game.getCreateUser().getUserId().equals(userInfo.getUserId())) {
+                        userStatus = "created";
+                    } else if (game.getPlayers().stream().anyMatch(player -> player.getUserId().equals(userInfo.getUserId()))) {
+                        userStatus = "participating";
+                    } else {
+                        userStatus = "waiting";
+                    }
 
-            return MyGameDto.builder()
-                    .id(game.getId())
-                    .gameName(game.getGameName())
-                    .maxPlayer(game.getMaxPlayer())
-                    .minPlayer(game.getMinPlayer())
-                    .address(game.getAddress())
-                    .gameDate(game.getGameDate())
-                    .deadlineYn(game.getDeadlineYn())
-                    .content(game.getContent())
-                    .stadium(game.getStadium())
-                    .gameType(game.getGameType())
-                    .createUser(game.getCreateUser())
-                    .closeYn(game.getCloseYn())
-                    .players(game.getPlayers())
-                    .waitingPlayers(game.getWaitingPlayers())
-                    .userStatus(userStatus)
-                    .build();
-        });
+                    return MyGameDto.builder()
+                            .id(game.getId())
+                            .gameName(game.getGameName())
+                            .maxPlayer(game.getMaxPlayer())
+                            .minPlayer(game.getMinPlayer())
+                            .address(game.getAddress())
+                            .gameDate(game.getGameDate())
+                            .deadlineYn(game.getDeadlineYn())
+                            .content(game.getContent())
+                            .stadium(game.getStadium())
+                            .gameType(game.getGameType())
+                            .createUser(game.getCreateUser())
+                            .closeYn(game.getCloseYn())
+                            .players(game.getPlayers())
+                            .waitingPlayers(game.getWaitingPlayers())
+                            .userStatus(userStatus)
+                            .build();
+                })
+                .filter(myGameDto -> {
+                    if (params.getMyGameState() == null || params.getMyGameState().isEmpty()) {
+                        return true;
+                    }
+
+                    LocalDateTime now = LocalDateTime.now();
+
+                    switch (params.getMyGameState()) {
+                        case "1": // Not Started
+                            return myGameDto.getGameDate().isAfter(now);
+                        case "2": // Finished
+                            return myGameDto.getGameDate().isBefore(now);
+                        case "3": // Created by me
+                            return myGameDto.getUserStatus().equals("created");
+                        default:
+                            return true;
+                    }
+                })
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(filteredGames, PageRequest.of(params.getCurrPage(), params.getPageSize()), myGameList.getTotalElements());
     }
 
 
